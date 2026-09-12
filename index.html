@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#111827" />
+  <title>Fantasy Football - 14 Week Schedule</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap hero-inner">
+      <div>
+        <p class="eyebrow">12-team fantasy football league</p>
+        <h1>14-Week League Schedule</h1>
+        <p class="lead">Balanced home and away schedule with rivalry, friendship, and previous-standings rounds.</p>
+      </div>
+      <a class="button button-secondary" href="assets/fantasy_football_14_week_home_away_schedule.pdf" target="_blank" rel="noopener">Download PDF</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="stats" aria-label="Schedule summary">
+      <div class="stat"><strong>14</strong><span>Weeks</span></div>
+      <div class="stat"><strong>12</strong><span>Teams</span></div>
+      <div class="stat"><strong>7 / 7</strong><span>Home / Away</span></div>
+      <div class="stat"><strong>2</strong><span>Max venue streak</span></div>
+    </section>
+
+    <section class="panel swap-panel" id="swapPanel">
+      <div class="section-heading swap-heading">
+        <div>
+          <p class="eyebrow dark">Weekly league decision</p>
+          <h2>Swap High Score for This Week?</h2>
+          <p class="section-copy">Choose your team and submit Yes or No before <strong>10:00 AM Pacific on Sunday</strong>. Each team may use <strong>Yes only 3 times all season</strong>. No submission counts as No.</p>
+        </div>
+        <div class="status-badge" id="swapStatusBadge">Loading...</div>
+      </div>
+
+      <div id="swapSetupNotice" class="notice warning hidden">
+        <strong>Backend setup required.</strong>
+        The schedule is live, but weekly voting will activate after Supabase is configured in <code>config.js</code>.
+      </div>
+
+      <div id="swapOpenView" class="hidden">
+        <div class="deadline-strip">
+          <div>
+            <span class="mini-label">Current round</span>
+            <strong id="swapWeekLabel">Week -</strong>
+          </div>
+          <div>
+            <span class="mini-label">Submission deadline</span>
+            <strong id="swapDeadlineLabel">-</strong>
+          </div>
+        </div>
+
+        <form id="swapForm" class="swap-form">
+          <label>
+            <span>Your team</span>
+            <select id="swapTeam" required>
+              <option value="">Select team</option>
+            </select>
+          </label>
+
+          <fieldset class="choice-fieldset">
+            <legend>Swap high score for this week?</legend>
+            <div class="yes-no-grid">
+              <label class="choice-card yes-choice">
+                <input type="radio" name="swapAnswer" value="yes" required />
+                <span><strong>Yes</strong><small>Swap the high score</small></span>
+              </label>
+              <label class="choice-card no-choice">
+                <input type="radio" name="swapAnswer" value="no" required />
+                <span><strong>No</strong><small>Keep it as normal</small></span>
+              </label>
+            </div>
+          </fieldset>
+
+          <button id="swapSubmit" class="button" type="submit">Submit response</button>
+        </form>
+        <div id="swapMessage" class="submission-message hidden" role="status" aria-live="polite"></div>
+        <p class="privacy-note">Responses are hidden from the league until the Sunday cutoff. Each team has 3 Yes uses for the season. You can change your response before the deadline; changing Yes back to No restores that use.</p>
+      </div>
+
+      <div id="swapResultsView" class="hidden">
+        <div class="results-lock">
+          <div>
+            <span class="mini-label">Locked results</span>
+            <h3 id="resultsWeekLabel">Week -</h3>
+          </div>
+          <p id="resultsUntilLabel">Locked until Tuesday.</p>
+        </div>
+        <div class="yes-results">
+          <h3>Teams that selected Yes</h3>
+          <div id="yesTeams" class="team-chips"></div>
+          <p class="automatic-no">Every other team is recorded as <strong>No</strong>, including teams that did not submit.</p>
+        </div>
+        <div class="remaining-results">
+          <div class="remaining-heading">
+            <div>
+              <span class="mini-label">Season allowance</span>
+              <h3>Yes uses remaining</h3>
+            </div>
+            <span class="allowance-note">3 per team / season</span>
+          </div>
+          <div id="remainingUses" class="remaining-grid" aria-label="Yes uses remaining by team"></div>
+        </div>
+      </div>
+
+      <div id="swapPreseasonView" class="notice hidden"></div>
+      <div id="swapCompleteView" class="notice hidden">The 14-week submission season is complete.</div>
+    </section>
+
+    <section class="panel controls-panel">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow dark">Browse schedule</p>
+          <h2>Find your games</h2>
+        </div>
+      </div>
+      <div class="controls">
+        <label>
+          <span>Team</span>
+          <select id="teamFilter">
+            <option value="all">All teams</option>
+          </select>
+        </label>
+        <label>
+          <span>Week</span>
+          <select id="weekFilter">
+            <option value="all">All weeks</option>
+          </select>
+        </label>
+        <button id="clearFilters" class="button" type="button">Reset filters</button>
+      </div>
+      <div id="selectedTeamSummary" class="team-summary hidden"></div>
+    </section>
+
+    <section class="legend" aria-label="Round legend">
+      <span><i class="dot rivalry"></i>Rivalry round</span>
+      <span><i class="dot friendship"></i>Friendship round</span>
+      <span><i class="dot standings"></i>Previous-standings round</span>
+      <span><i class="dot regular"></i>Regular season</span>
+    </section>
+
+    <section id="schedule" class="schedule-grid" aria-live="polite"></section>
+
+    <section class="panel rules-panel">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow dark">League format</p>
+          <h2>How the schedule works</h2>
+        </div>
+      </div>
+      <div class="rule-grid">
+        <article>
+          <h3>Rivalry rounds</h3>
+          <p>Weeks 1 and 14 repeat the six fixed rivalry matchups, with the home venue reversed for the second meeting.</p>
+        </article>
+        <article>
+          <h3>Friendship round</h3>
+          <p>Week 12 repeats the six friendship matchups from their earlier regular-season meeting, again reversing the venue.</p>
+        </article>
+        <article>
+          <h3>Standings round</h3>
+          <p>Week 13 repeats pairings derived from the previous year's standings. Because 1 vs 2 was already a rivalry, the top four were adjusted to 1 vs 3 and 2 vs 4.</p>
+        </article>
+        <article>
+          <h3>Home / away balance</h3>
+          <p>Every team has exactly seven home and seven away games, and no team has more than two consecutive home or away games.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel standings-panel">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow dark">Previous season</p>
+          <h2>Standings used for Week 13</h2>
+        </div>
+      </div>
+      <ol id="standingsList" class="standings-list"></ol>
+      <div class="adjustment-note">
+        <strong>Week 13 adjusted pairings:</strong>
+        milklizard vs buzzdog; hailstatetx vs sorenk; jklinke vs sgibby; younggunz vs samwill226; twhitt vs hopkinsdrums; fitzmagicman vs msmith69.
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <span>Fantasy Football League Schedule</span>
+      <span>Home team is listed first.</span>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
